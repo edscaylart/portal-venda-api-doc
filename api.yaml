@@ -1,0 +1,161 @@
+---
+openapi: 3.0.0
+info:
+  title: Portal de Vendas API CORE
+  description: |
+    Esta é uma API REST utilizada pelo Portal de Vendas Web desenvolvida em NodeJS. Aqui é realizada toda autenticação e controle de usuário.
+    # Introdução
+    Está API é utilizada como um microserviço para *autenticação* e *validação* do acesso do usuário.
+  contact:
+    email: ed.kenshin@gmail.com
+    url: https://github.com/edscaylart
+  license:
+    name: Copyright ATTO Sementes 2020. All rights reserved
+  version: 1.0.0
+  x-logo:
+    url: http://www.attosementes.com.br/wp-content/uploads/2018/11/logo-atto.png
+    altText: ATTO Sementes
+servers:
+  - url: http://attoservices.hitcode.com.br:2086
+    description: Desenvolvimento
+
+tags:
+  - name: Sessão
+    description: Rotas para autenticação e validação do usuário
+  - name: Usuário
+    description: Listagem e controle de usuários
+
+paths:
+  /segmentacao:
+    get:
+      operationId: Listar Segmentações
+      description: Retorna as segmentações do usuário
+      security:
+        - bearerAuth: []
+      responses:
+        "401":
+          $ref: "#/components/responses/UnauthorizedError"
+        "200":
+          description: Operação bem sucedida
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/responseBody/Segmentacao"
+  # Routes - Sessão --------------------------------------------------------------------------------------------
+  /authentication:
+    post:
+      tags:
+        - Sessão
+      operationId: Login
+      description: Efetua a atuenticação do usuário. Com essa rota você irá obter os dados atuais do usuário e um `access_token` para realizar todas as requisições à API do Portal de Vendas.
+      requestBody:
+        content:
+          application/json:
+            schema:
+              required:
+                - email
+                - modulo
+                - senha
+              type: object
+              properties:
+                email:
+                  type: string
+                  description: Endereço de e-mail válido
+                senha:
+                  type: string
+                  description: Senha criptografada em `sha512`
+                modulo:
+                  type: integer
+                  default: 3
+        required: true
+      responses:
+        "200":
+          description: Operação bem sucedida
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/responseBody/Login"
+  /token/validation:
+    get:
+      tags:
+        - Sessão
+      operationId: Validar Token
+      description: Responsável por validar se o usuário está autorizado a continuar realizando a requisição e carregar a sessão so mesmo.
+      security:
+        - bearerAuth: []
+      responses:
+        "401":
+          $ref: "#/components/responses/UnauthorizedError"
+        "200":
+          description: Operação bem sucedida
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/responseBody/User"
+
+components:
+  responses:
+    UnauthorizedError:
+      description: Unauthorized
+  responseBody:
+    Login:
+      type: object
+      properties:
+        nome:
+          type: string
+        email:
+          type: string
+        telefone:
+          type: string
+        documento:
+          type: string
+        codigo:
+          type: integer
+        codigoGrupoUsuario:
+          type: integer
+        grupoUsuario:
+          type: string
+        accessToken:
+          type: string
+          example: eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpZCI6MTUwMSwiY29kaWdvIjo0OCwiZ3J1cG8iOi0xfQ.Cobt4HoVVnJ28bESmAAOhbAu40Co_24jIM3AaSOgjoM
+      description: Schema para Autenticação do usuário
+    Segmentacao:
+      type: array
+      description: Schema para Segmentações do usuário
+      items:
+        type: object
+        properties:
+          id:
+            type: integer
+          nome:
+            type: string
+          codigo:
+            type: string
+          atualizadoEm:
+            type: string
+            format: date-time
+    User:
+      type: object
+      properties:
+        id:
+          type: integer
+        nome:
+          type: string
+        email:
+          type: string
+        telefone:
+          type: string
+        documento:
+          type: string
+        codigo:
+          type: integer
+        codigoGrupoUsuario:
+          type: integer
+        grupoUsuario:
+          type: string
+      description: Schema para Autenticação do usuário
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
